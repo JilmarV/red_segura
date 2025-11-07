@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "776234544370",
+    "project_id": "appmoviles-redsegura",
+    "storage_bucket": "appmoviles-redsegura.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:776234544370:android:229ae5d794142942e6f46b",
+        "android_client_info": {
+          "package_name": "com.example.taller1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkWdOtyVZC_asI7cp57-s7XNpz1CnpdEs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

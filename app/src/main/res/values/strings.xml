@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Taller1</string>
+    <string name="email_hint">Correo electrónico</string>
+    <string name="password_hint">Contraseña</string>
+    <string name="login_title">Iniciar Sesión</string>
+    <string name="welcome_back">Qué gusto verte de nuevo</string>
+    <string name="login_button">Iniciar Sesión</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="change">Cambiar</string>
+    <string name="no_account">¿No tienes una cuenta?</string>
+    <string name="register">Regístrate</string>
+    <string name="empty_fields_error">Se deben llenar los campos</string>
+    <string name="login_error">Usuario o contraseña incorrectos</string>
+
+    <string name="report_title">Título del reporte</string>
+    <string name="select_category">Seleccionar categoría</string>
+    <string name="category_1">Categoría 1</string>
+    <string name="category_2">Categoría 2</string>
+    <string name="description_label">Descripción del incidente</string>
+    <string name="location">Latitud y longitud</string>
+    <string name="important">Es importante</string>
+    <string name="report_button">Reportar</string>
+    <string name="image_dialog_title">Seleccionar Imagen</string>
+    <string name="image_dialog_text">Elige si deseas cargar una imagen desde la galería o tomar una foto.</string>
+    <string name="gallery">Galería</string>
+    <string name="camera">Cámara</string>
+    <string name="add_image">Agregar imagen</string>
+</resources>

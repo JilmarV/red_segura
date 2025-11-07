@@ -1,0 +1,42 @@
+# ---- ANDROID / GRADLE ----
+
+# Build outputs
+/build/
+**/build/
+.cxx/
+.externalNativeBuild/
+
+# Gradle
+.gradle/
+local.properties
+
+# Log & temp files
+*.log
+captures/
+
+# ---- ANDROID STUDIO / INTELLIJ ----
+
+# Ignore entire IDEA folder except essential configs
+.idea/*
+!.idea/codeStyles/
+!.idea/codeStyles/*
+!.idea/modules.xml
+!.idea/vcs.xml
+
+# Ignore other IntelliJ files
+*.iml
+.idea/caches/
+.idea/libraries/
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/misc.xml
+.idea/deploymentTargetSelector.xml
+
+# ---- OS SPECIFIC ----
+.DS_Store
+Thumbs.db
+
+# ---- KEYSTORE (si existiera) ----
+*.jks
+*.keystore
