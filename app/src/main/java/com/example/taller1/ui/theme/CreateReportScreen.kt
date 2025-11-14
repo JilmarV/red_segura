@@ -177,7 +177,7 @@ fun CreateReportScreen(navController: NavController) {
                     images = emptyList(),
                     location = Location(4.6097, -74.0818),
                     fecha = fechaFormato,
-                    userId = UserSession.currentUser.toString(),
+                    userId = UserSession.currentUser.id,
                     category = category
                 )
 

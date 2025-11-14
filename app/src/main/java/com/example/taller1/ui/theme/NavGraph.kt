@@ -4,9 +4,11 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.taller1.screens.NotificationScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -18,7 +20,6 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
         composable("register") { RegisterScreen(navController) }
         composable("dataModification") { DataModificationScreen(navController) }
         composable("forgotPassword") { ForgotPassword(navController) }
-
 
         composable("home") {
             SideMenuScreen(navController = navController, title = "Inicio") {
@@ -49,24 +50,35 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
                 NotificationScreen(navController)
             }
         }
+
         composable("detalle_reporte") {
             SideMenuScreen(navController = navController, title = "Detalle del Reporte") {
                 ReportDetailScreen(navController)
             }
         }
+
         composable("admin_profile") {
             SideMenuScreen(navController = navController, title = "Perfil del Administrador") {
                 AdminProfileScreen()
             }
         }
+
         composable("homeadmin") {
             HomeAdminScreen(navController)
         }
-        composable("cancel_reason") {
-            CancelReasonScreen(navController = navController)
-        }
-        composable("login") {
-            LoginScreen(navController = navController)
+
+        composable(
+            "cancel_reason/{reportId}/{userId}",
+            arguments = listOf(
+                navArgument("reportId") { type = NavType.StringType },
+                navArgument("userId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            CancelReasonScreen(
+                navController = navController,
+                reportId = backStackEntry.arguments?.getString("reportId") ?: "",
+                userId = backStackEntry.arguments?.getString("userId") ?: ""
+            )
         }
     }
 }

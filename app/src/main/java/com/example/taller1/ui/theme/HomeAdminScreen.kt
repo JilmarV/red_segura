@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
@@ -20,8 +21,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.example.taller1.firebase.FirestoreService
+import com.example.taller1.model.Report
+import com.example.taller1.model.ReportState
 import kotlinx.coroutines.launch
 
 @Composable
@@ -30,13 +34,32 @@ fun HomeAdminScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val sideMenuAdmin = SideMenuAdmin()
 
+    var loading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val reports = remember { mutableStateListOf<Report>() }
+    val snackbarHostState = scaffoldState.snackbarHostState
+
+    LaunchedEffect(Unit) {
+        FirestoreService.getPendingReports(
+            onSuccess = { list ->
+                reports.clear()
+                reports.addAll(list)
+                loading = false
+            },
+            onFailure = { e ->
+                errorMessage = e.message ?: "Error al cargar reportes"
+                loading = false
+            }
+        )
+    }
+
     Scaffold(
         scaffoldState = scaffoldState,
         topBar = {
             sideMenuAdmin.TopBar(
                 scope = scope,
                 scaffoldState = scaffoldState,
-                title = "Inicio Admin"
+                title = "Reportes pendientes"
             )
         },
         drawerContent = {
@@ -45,25 +68,91 @@ fun HomeAdminScreen(navController: NavHostController) {
                 scope = scope,
                 scaffoldState = scaffoldState
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        LazyColumn(
-            contentPadding = PaddingValues(top = 24.dp, bottom = 24.dp),
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
-                .padding(padding),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(padding)
         ) {
-            items(10) { index ->
-                PostItemAdmin(index = index, navController = navController)
+            when {
+                loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                errorMessage != null -> {
+                    Text(
+                        text = errorMessage ?: "Error",
+                        color = Color.Red,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                reports.isEmpty() -> {
+                    Text(
+                        text = "No hay reportes pendientes",
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+
+                else -> {
+                    LazyColumn(
+                        contentPadding = PaddingValues(top = 24.dp, bottom = 24.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        items(reports) { report ->
+                            PostItemAdmin(
+                                report = report,
+                                navController = navController,
+                                onVerify = {
+                                    FirestoreService.verifyReport(
+                                        reportId = report.id,
+                                        onSuccess = {
+                                            FirestoreService.createReportResultNotification(
+                                                userId = report.userId,
+                                                reportId = report.id,
+                                                newState = ReportState.ACCEPTED,
+                                                motivo = null,
+                                                onSuccess = {},
+                                                onFailure = {}
+                                            )
+                                            reports.remove(report)
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Reporte verificado")
+                                            }
+                                        },
+                                        onFailure = { e ->
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    "Error al verificar: ${e.message}"
+                                                )
+                                            }
+                                        }
+                                    )
+                                },
+                                onReject = {
+                                    navController.navigate("cancel_reason/${report.id}/${report.userId}")
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun PostItemAdmin(index: Int, navController: NavController) {
+fun PostItemAdmin(
+    report: Report,
+    navController: NavController,
+    onVerify: () -> Unit,
+    onReject: () -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
 
     Card(
@@ -83,7 +172,7 @@ fun PostItemAdmin(index: Int, navController: NavController) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Título ${index + 1}",
+                        text = report.title,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     )
@@ -96,10 +185,10 @@ fun PostItemAdmin(index: Int, navController: NavController) {
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Ubicación ${index + 1}", color = Color.Red)
+                        Text("Ubicación", color = Color.Red)
                     }
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("Categoría ${index + 1}", fontSize = 12.sp, color = Color.Gray)
+                    Text(report.category.name, fontSize = 12.sp, color = Color.Gray)
                 }
 
                 Box {
@@ -116,15 +205,15 @@ fun PostItemAdmin(index: Int, navController: NavController) {
                     ) {
                         DropdownMenuItem(onClick = {
                             expanded = false
-                            // Acción para verificar
+                            onVerify()
                         }) {
                             Text("Verificar")
                         }
                         DropdownMenuItem(onClick = {
                             expanded = false
-                            navController.navigate("cancel_reason")
+                            onReject()
                         }) {
-                            Text("Eliminar")
+                            Text("Rechazar")
                         }
                     }
                 }
@@ -150,9 +239,7 @@ fun PostItemAdmin(index: Int, navController: NavController) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                        "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
-                        "Ut enim ad minim veniam (Reporte #${index + 1}).",
+                text = report.description,
                 fontSize = 14.sp,
                 color = Color.DarkGray,
                 textAlign = TextAlign.Justify
@@ -163,12 +250,16 @@ fun PostItemAdmin(index: Int, navController: NavController) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Rounded.Verified,
-                    contentDescription = "Verificado",
-                    tint = Color(0xFF4CAF50),
+                    contentDescription = "Estado",
+                    tint = when (report.state) {
+                        ReportState.PENDING -> Color.Gray
+                        ReportState.ACCEPTED -> Color(0xFF4CAF50)
+                        ReportState.REJECTED -> Color.Red
+                    },
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("000-${index + 1}", color = Color.Gray)
+                Text(report.id, color = Color.Gray)
             }
         }
     }
