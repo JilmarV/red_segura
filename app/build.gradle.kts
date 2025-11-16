@@ -9,7 +9,6 @@ android {
     namespace = "com.example.taller1"
     compileSdk = 34
 
-
     defaultConfig {
         applicationId = "com.example.taller1"
         minSdk = 24
@@ -42,11 +41,11 @@ android {
 }
 
 dependencies {
-
     implementation("androidx.navigation:navigation-compose:2.7.5")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
@@ -54,28 +53,29 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.places)
     implementation(libs.firebase.auth.ktx)
+    implementation("androidx.compose.ui:ui:1.5.0")
+    implementation("androidx.compose.material:material:1.5.0")
+    implementation("androidx.compose.material3:material3:1.1.2")
+    implementation("androidx.compose.runtime:runtime:1.5.0")
+    implementation("androidx.navigation:navigation-compose:2.7.5")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+
     testImplementation(libs.junit)
-    implementation ("androidx.compose.ui:ui:1.5.0")
-    implementation ("androidx.compose.material:material:1.5.0")
-    implementation ("androidx.compose.material3:material3:1.1.2")
-    implementation ("androidx.compose.runtime:runtime:1.5.0")
-    implementation ("androidx.navigation:navigation-compose:2.7.5")
-    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation ("com.google.android.material:material:1.10.0")
-    implementation ("io.coil-kt:coil-compose:2.1.0")
-    implementation ("androidx.compose.material:material-icons-core:1.5.0")
-    implementation ("androidx.compose.material:material-icons-extended:1.5.0")
+    implementation("com.google.android.material:material:1.10.0")
+    implementation("io.coil-kt:coil-compose:2.1.0")
+    implementation("androidx.compose.material:material-icons-core:1.5.0")
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
 
     implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
     implementation("com.google.firebase:firebase-analytics")
-    // Firestore con extensiones de Kotlin
     implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation ("com.mapbox.maps:android:11.11.0")
-    implementation ("com.mapbox.extension:maps-compose:11.11.0")
+    implementation("com.google.firebase:firebase-storage-ktx")
+    implementation("com.mapbox.maps:android:11.11.0")
+    implementation("com.mapbox.extension:maps-compose:11.11.0")
 }

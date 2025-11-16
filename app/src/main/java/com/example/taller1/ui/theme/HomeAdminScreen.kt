@@ -1,5 +1,7 @@
 package com.example.taller1.ui.theme
 
+import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,10 +25,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
+import androidx.compose.ui.layout.ContentScale
 import com.example.taller1.firebase.FirestoreService
 import com.example.taller1.model.Report
 import com.example.taller1.model.ReportState
 import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun HomeAdminScreen(navController: NavHostController) {
@@ -161,7 +166,7 @@ fun PostItemAdmin(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable {
-                navController.navigate("detalle_reporte")
+                navController.navigate("detalle_reporte/${report.id}")
             }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -185,7 +190,11 @@ fun PostItemAdmin(
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Ubicación", color = Color.Red)
+                        Text(
+                            "Lat: ${report.location.latitud}, Lon: ${report.location.longitud}",
+                            color = Color.Red,
+                            fontSize = 12.sp
+                        )
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(report.category.name, fontSize = 12.sp, color = Color.Gray)
@@ -228,12 +237,30 @@ fun PostItemAdmin(
                     .background(Color(0xFFE0E0E0)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Image,
-                    contentDescription = "Imagen",
-                    modifier = Modifier.size(64.dp),
-                    tint = Color.Gray
-                )
+                val firstImage = report.images.firstOrNull()
+
+                if (firstImage != null) {
+                    val model: Any =
+                        if (firstImage.startsWith("content://") || firstImage.startsWith("file://")) {
+                            Uri.parse(firstImage)
+                        } else {
+                            File(firstImage)
+                        }
+
+                    Image(
+                        painter = rememberAsyncImagePainter(model),
+                        contentDescription = "Imagen del reporte",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Image,
+                        contentDescription = "Imagen",
+                        modifier = Modifier.size(64.dp),
+                        tint = Color.Gray
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))

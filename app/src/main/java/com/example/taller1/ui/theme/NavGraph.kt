@@ -51,9 +51,15 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
             }
         }
 
-        composable("detalle_reporte") {
+        composable(
+            route = "detalle_reporte/{reportId}",
+            arguments = listOf(
+                navArgument("reportId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val reportId = backStackEntry.arguments?.getString("reportId") ?: ""
             SideMenuScreen(navController = navController, title = "Detalle del Reporte") {
-                ReportDetailScreen(navController)
+                ReportDetailScreen(navController = navController, reportId = reportId)
             }
         }
 
