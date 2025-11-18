@@ -286,7 +286,7 @@ fun PostItemAdmin(
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(report.id, color = Color.Gray)
+                Text(report.userName, color = Color.Gray)
             }
         }
     }

@@ -13,5 +13,5 @@ class Report(
     var userId: String = "",
     var category: Category = Category.OTROS,
     var rejectionReason: String? = null,
-    val userName: String = "",
+    var userName: String = "",
 )

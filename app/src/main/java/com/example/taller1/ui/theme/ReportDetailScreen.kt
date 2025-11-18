@@ -1,40 +1,72 @@
 package com.example.taller1.ui.theme
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.example.taller1.data.UserSession
+import com.example.taller1.firebase.FirestoreService
+import com.example.taller1.model.Comment
 import com.example.taller1.model.Report
 import com.google.firebase.firestore.FirebaseFirestore
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun ReportDetailScreen(navController: NavController, reportId: String) {
 
     val db = FirebaseFirestore.getInstance()
+    val context = LocalContext.current
 
     var report by remember { mutableStateOf<Report?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+
+    // Comentarios
+    var comments by remember { mutableStateOf<List<Comment>>(emptyList()) }
+    var commentsLoading by remember { mutableStateOf(true) }
+    var newComment by remember { mutableStateOf("") }
+    var isPosting by remember { mutableStateOf(false) }
+
+    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
+
+    fun loadComments() {
+        commentsLoading = true
+        FirestoreService.getCommentsForReport(
+            reportId,
+            onSuccess = { list ->
+                comments = list
+                commentsLoading = false
+            },
+            onFailure = { e ->
+                comments = emptyList()
+                commentsLoading = false
+                Toast.makeText(context, "Error al cargar comentarios: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
 
     LaunchedEffect(reportId) {
         db.collection("reportes")
@@ -49,6 +81,8 @@ fun ReportDetailScreen(navController: NavController, reportId: String) {
                 error = e.message ?: "Error al cargar el reporte"
                 isLoading = false
             }
+
+        loadComments()
     }
 
     Scaffold(
@@ -106,7 +140,7 @@ fun ReportDetailScreen(navController: NavController, reportId: String) {
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Reporte no encontrado", color = Color.Gray)
+                    Text(text = "Reporte no encontrado")
                 }
             }
 
@@ -116,53 +150,11 @@ fun ReportDetailScreen(navController: NavController, reportId: String) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding)
-                        .padding(horizontal = 16.dp)
-                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp)
+                        .padding(padding),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-
-                    Divider(color = Color.LightGray)
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(r.title, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Place,
-                            contentDescription = null,
-                            tint = Color.Red,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            "Lat: ${r.location.latitud}, Lon: ${r.location.longitud}",
-                            color = Color.Red,
-                            fontSize = 14.sp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        "Categoría: ${r.category}",
-                        color = Color.Gray,
-                        fontSize = 12.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        "Fecha: ${r.fecha}",
-                        color = Color.Gray,
-                        fontSize = 12.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Imagen
+                    Text(text = r.title, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -171,7 +163,6 @@ fun ReportDetailScreen(navController: NavController, reportId: String) {
                         contentAlignment = Alignment.Center
                     ) {
                         val firstImage = r.images.firstOrNull()
-
                         if (firstImage != null) {
                             val model: Any =
                                 if (firstImage.startsWith("content://") || firstImage.startsWith("file://")) {
@@ -188,78 +179,84 @@ fun ReportDetailScreen(navController: NavController, reportId: String) {
                             )
                         } else {
                             Icon(
-                                Icons.Default.Image,
+                                imageVector = Icons.Default.Image,
                                 contentDescription = "Imagen",
-                                tint = Color.Gray,
-                                modifier = Modifier.size(64.dp)
+                                modifier = Modifier.size(64.dp),
+                                tint = Color.Gray
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(text = r.description)
 
-                    Text(
-                        r.description,
-                        fontSize = 14.sp,
-                        color = Color.DarkGray
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
+                    // Comentarios - lista
+                    Text(text = "Comentarios", fontWeight = FontWeight.SemiBold)
+                    if (commentsLoading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    } else {
+                        if (comments.isEmpty()) {
+                            Text(text = "No hay comentarios", color = Color.Gray)
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 0.dp, max = 240.dp)
+                            ) {
+                                items(comments) { c ->
+                                    val hora = c.fecha
+                                    ComentarioItem(nombre = c.userName, comentario = c.content, hora = hora)
+                                    Divider()
+                                }
+                            }
+                        }
+                    }
 
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Verified,
-                                contentDescription = "Estado",
-                                tint = Color.Black,
-                                modifier = Modifier.size(16.dp)
+                        OutlinedTextField(
+                            value = newComment,
+                            onValueChange = { newComment = it },
+                            modifier = Modifier.weight(1f),
+                            label = { Text("Escribe un comentario") },
+                            enabled = !isPosting
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Button(
+                            onClick = {
+                                if (newComment.isBlank()) return@Button
+                                isPosting = true
+                                val currentUserId = UserSession.currentUser.id
+                                FirestoreService.createComment(
+                                    content = newComment,
+                                    userId = currentUserId,
+                                    reportId = reportId,
+                                    onSuccess = { _ ->
+                                        isPosting = false
+                                        newComment = ""
+                                        loadComments()
+                                        Toast.makeText(context, "Comentario enviado", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onFailure = { _ ->
+                                        isPosting = false
+                                        Toast.makeText(context, "Error al enviar comentario", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            },
+                            enabled = !isPosting,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Red
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(r.state.name, color = Color.Black)
+                        ) {
+                            Text(if (isPosting) "Enviando..." else "Enviar",
+                                color = Color.White)
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        "Comentarios",
-                        color = Color.Red,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-
-                    Divider(color = Color.LightGray, modifier = Modifier.padding(vertical = 8.dp))
-
-                    ComentarioItem(
-                        nombre = "Carlos",
-                        comentario = "Excelente reporte, gracias por compartir.",
-                        hora = "10:23 a. m."
-                    )
-                    ComentarioItem(
-                        nombre = "Laura",
-                        comentario = "Esto debería ser atendido pronto.",
-                        hora = "10:45 a. m."
-                    )
-
-                    Divider(color = Color.LightGray, modifier = Modifier.padding(top = 8.dp))
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = "Usuario",
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Añadir un comentario...", color = Color.Gray)
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
@@ -268,39 +265,20 @@ fun ReportDetailScreen(navController: NavController, reportId: String) {
 
 @Composable
 fun ComentarioItem(nombre: String, comentario: String, hora: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        Icon(
-            imageVector = Icons.Default.Person,
-            contentDescription = "Usuario",
-            modifier = Modifier
-                .size(36.dp)
-                .padding(top = 4.dp)
-        )
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFF5F5F5), shape = MaterialTheme.shapes.medium)
-                .padding(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(nombre, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(hora, fontSize = 12.sp, color = Color.Gray)
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(text = nombre, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                if (hora.isNotEmpty()) {
+                    Text(text = hora, fontSize = 12.sp, color = Color.Gray)
+                }
             }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(comentario, fontSize = 14.sp)
         }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(text = comentario)
     }
 }
